@@ -1,0 +1,11 @@
+<!-- A-Frame 렌더링 섹션 -->
+<a-scene id="aframe-scene" embedded>
+    <a-assets>
+        <a-asset-item id="wedding-dress" src="./public/WEDDİNG DRESS TİP2_gltf_thick.gltf"></a-asset-item>
+    </a-assets>
+    <a-entity gltf-model="#wedding-dress" position="0 0 -3" rotation="0 0 0" scale="1 1 1"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"></a-entity>
+    <a-light type="ambient" color="#404040"></a-light>
+    <a-light type="directional" position="1 1 1" intensity="0.8"></a-light>
+    <a-camera position="0 1.6 0"></a-camera>
+</a-scene>
