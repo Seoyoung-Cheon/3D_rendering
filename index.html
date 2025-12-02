@@ -9,6 +9,7 @@
     <!-- 외부 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/RGBELoader.js"></script>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
 
     <style>
@@ -99,7 +100,7 @@
             border: 2px solid #ddd;
             border-radius: 10px;
             overflow: hidden;
-            background: #000;
+            background: #d4d3d3;
             position: relative;
         }
 
@@ -226,6 +227,11 @@
 
         // 라이브러리 선택 함수
         function selectLibrary(library, buttonElement) {
+            // URL 파라미터 업데이트
+            const url = new URL(window.location);
+            url.searchParams.set('library', library);
+            window.history.pushState({ library: library }, '', url);
+
             // 모든 섹션 숨기기
             document.querySelectorAll('.render-section').forEach(section => {
                 section.classList.remove('active');
@@ -259,6 +265,23 @@
             }
         }
 
+        // URL 파라미터에서 라이브러리 읽기
+        function getLibraryFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('library');
+        }
+
+        // 페이지 로드 시 URL 파라미터 확인하여 라이브러리 자동 선택
+        function initFromURL() {
+            const library = getLibraryFromURL();
+            if (library && ['threejs', 'webgl', 'aframe'].includes(library)) {
+                const button = document.querySelector(`[data-library="${library}"]`);
+                if (button) {
+                    selectLibrary(library, button);
+                }
+            }
+        }
+
         // A-Frame 로드 함수
         function loadAFrame() {
             const container = document.getElementById('aframe-container');
@@ -267,6 +290,24 @@
                     .then(response => response.text())
                     .then(html => {
                         container.innerHTML = html;
+
+                        // A-Frame 모델 로드 후 머티리얼 조정
+                        setTimeout(() => {
+                            const scene = document.querySelector('#aframe-scene');
+                            if (scene) {
+                                const dressEntity = scene.querySelector('#dress-model');
+                                if (dressEntity) {
+                                    dressEntity.addEventListener('model-loaded', function () {
+                                        adjustAFrameMaterials(dressEntity);
+                                    });
+
+                                    // 이미 로드된 경우
+                                    if (dressEntity.getObject3D('mesh')) {
+                                        adjustAFrameMaterials(dressEntity);
+                                    }
+                                }
+                            }
+                        }, 100);
                     })
                     .catch(error => {
                         console.error('A-Frame 컴포넌트 로드 오류:', error);
@@ -274,7 +315,77 @@
             }
         }
 
-        // 페이지 로드 시 초기화하지 않음 (버튼 클릭 시에만 초기화)
+        // A-Frame 머티리얼 조정 함수
+        function adjustAFrameMaterials(entity) {
+            const model = entity.getObject3D('mesh');
+            if (!model) return;
+
+            model.traverse(function (obj) {
+                if (obj.isMesh && obj.material) {
+                    const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                    materials.forEach(function (mat) {
+                        if (!mat) return;
+
+                        // 텍스처 색공간 설정
+                        if (mat.map) {
+                            mat.map.colorSpace = THREE.SRGBColorSpace;
+                        }
+
+                        // 색상 보정: 하얀 계열로
+                        if (mat.color) {
+                            mat.color.set(0xf5f5f5);  // 밝은 하얀색 계열
+                        }
+
+                        // 반사 제거 (천 질감)
+                        if (mat.roughness !== undefined) {
+                            mat.roughness = 1.0;  // 완전히 거칠게 = 반사 없음
+                        }
+                        if (mat.metalness !== undefined) {
+                            mat.metalness = 0.0;  // 완전 비금속
+                        }
+                        if (mat.envMapIntensity !== undefined) {
+                            mat.envMapIntensity = 0.0;  // 환경 반사 제거
+                        }
+                        if (mat.specular !== undefined) {
+                            mat.specular.set(0x000000);  // 반사 없음
+                        }
+                        if (mat.glossiness !== undefined) {
+                            mat.glossiness = 0.0;
+                        }
+                        if ('clearcoat' in mat) {
+                            mat.clearcoat = 0.0;
+                        }
+                        if ('sheen' in mat) {
+                            mat.sheen = 0.0;
+                        }
+                    });
+                }
+            });
+        }
+
+        // 페이지 로드 시 URL 파라미터 확인하여 라이브러리 자동 선택
+        window.addEventListener('load', () => {
+            initFromURL();
+        });
+
+        // 브라우저 뒤로/앞으로 버튼 처리
+        window.addEventListener('popstate', (event) => {
+            if (event.state && event.state.library) {
+                const button = document.querySelector(`[data-library="${event.state.library}"]`);
+                if (button) {
+                    selectLibrary(event.state.library, button);
+                }
+            } else {
+                // URL 파라미터가 없으면 초기 상태로
+                document.querySelectorAll('.render-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                document.querySelectorAll('.lib-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.getElementById('no-selection').style.display = 'block';
+            }
+        });
     </script>
 </body>
 

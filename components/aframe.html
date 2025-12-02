@@ -1,11 +1,66 @@
 <!-- A-Frame 렌더링 섹션 -->
-<a-scene id="aframe-scene" embedded>
+<a-scene id="aframe-scene" embedded background="color: #808080">
     <a-assets>
-        <a-asset-item id="wedding-dress" src="./public/WEDDİNG DRESS TİP2_gltf_thick.gltf"></a-asset-item>
+        <a-asset-item id="wedding-dress" src="./public/Princess/scene.gltf"></a-asset-item>
     </a-assets>
-    <a-entity gltf-model="#wedding-dress" position="0 0 -3" rotation="0 0 0" scale="1 1 1"
+    <a-entity id="dress-model" gltf-model="#wedding-dress" position="0 1 0" rotation="0 0 0" scale="1 1 1"
         animation="property: rotation; to: 0 360 0; loop: true; dur: 10000"></a-entity>
-    <a-light type="ambient" color="#404040"></a-light>
-    <a-light type="directional" position="1 1 1" intensity="0.8"></a-light>
-    <a-camera position="0 1.6 0"></a-camera>
+    <!-- 환경광 위주: 강한 빛 제거하여 반사 없애기 -->
+    <a-light type="ambient" color="#ffffff" intensity="0.8"></a-light>
+    <!-- 부드러운 방향광: 약한 빛으로 soft shadow만 (반사 유발 안 함) -->
+    <a-light type="directional" position="3 10 10" intensity="0.2" cast-shadow="true"></a-light>
+    <!-- 매우 약한 보조광: 그림자 대비만 -->
+    <a-light type="directional" position="-3 5 -5" intensity="0.15" cast-shadow="true"></a-light>
+    <a-camera position="0 1.6 1"></a-camera>
+
+    <script>
+        // A-Frame 모델 로드 후 머티리얼 조정
+        const dressEntity = document.getElementById('dress-model');
+        dressEntity.addEventListener('model-loaded', function () {
+            const model = dressEntity.getObject3D('mesh');
+            if (model) {
+                model.traverse(function (obj) {
+                    if (obj.isMesh && obj.material) {
+                        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+                        materials.forEach(function (mat) {
+                            if (!mat) return;
+
+                            // 텍스처 색공간 설정
+                            if (mat.map) {
+                                mat.map.colorSpace = THREE.SRGBColorSpace;
+                            }
+
+                            // 색상 보정: 하얀 계열로
+                            if (mat.color) {
+                                mat.color.set(0xf5f5f5);  // 밝은 하얀색 계열
+                            }
+
+                            // 반사 제거 (천 질감)
+                            if (mat.roughness !== undefined) {
+                                mat.roughness = 1.0;  // 완전히 거칠게 = 반사 없음
+                            }
+                            if (mat.metalness !== undefined) {
+                                mat.metalness = 0.0;  // 완전 비금속
+                            }
+                            if (mat.envMapIntensity !== undefined) {
+                                mat.envMapIntensity = 0.0;  // 환경 반사 제거
+                            }
+                            if (mat.specular !== undefined) {
+                                mat.specular.set(0x000000);  // 반사 없음
+                            }
+                            if (mat.glossiness !== undefined) {
+                                mat.glossiness = 0.0;
+                            }
+                            if ('clearcoat' in mat) {
+                                mat.clearcoat = 0.0;
+                            }
+                            if ('sheen' in mat) {
+                                mat.sheen = 0.0;
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
 </a-scene>
