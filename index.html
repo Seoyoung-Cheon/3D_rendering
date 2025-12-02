@@ -5,9 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D 렌더링 테스트 - Three.js, WebGL, A-Frame</title>
+
+    <!-- 외부 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -113,6 +116,7 @@
         <h1>🎨 3D 렌더링 테스트</h1>
 
         <!-- Three.js 섹션 -->
+        <!-- 코드: js/threejs.js -->
         <div class="render-section">
             <h2>Three.js 렌더링</h2>
             <div class="canvas-container">
@@ -126,6 +130,7 @@
         </div>
 
         <!-- WebGL 섹션 -->
+        <!-- 코드: js/webgl.js -->
         <div class="render-section">
             <h2>WebGL (Native) 렌더링</h2>
             <div class="canvas-container">
@@ -139,34 +144,36 @@
         </div>
 
         <!-- A-Frame 섹션 -->
+        <!-- 코드: components/aframe.html -->
         <div class="render-section">
             <h2>A-Frame 렌더링</h2>
-            <div class="canvas-container" id="aframe-container">
-                <!-- A-Frame 코드는 components/aframe.html에서 로드됩니다 -->
-            </div>
-            <div class="info">A-Frame을 사용한 GLTF 모델 렌더링 (자동 회전) - 코드: components/aframe.html</div>
+            <div class="canvas-container" id="aframe-container"></div>
+            <div class="info">A-Frame을 사용한 GLTF 모델 렌더링 (자동 회전)</div>
         </div>
     </div>
 
-    <!-- 외부 JavaScript 파일 로드 -->
+    <!-- 외부 JavaScript 파일 -->
     <script src="js/threejs.js"></script>
     <script src="js/webgl.js"></script>
 
-    <!-- 초기화 스크립트 -->
+    <!-- 초기화 -->
     <script>
         // A-Frame 섹션 로드
-        window.addEventListener('DOMContentLoaded', () => {
+        (function () {
             fetch('components/aframe.html')
                 .then(response => response.text())
                 .then(html => {
-                    document.getElementById('aframe-container').innerHTML = html;
+                    const container = document.getElementById('aframe-container');
+                    if (container) {
+                        container.innerHTML = html;
+                    }
                 })
                 .catch(error => {
                     console.error('A-Frame 컴포넌트 로드 오류:', error);
                 });
-        });
+        })();
 
-        // Initialize when page loads
+        // 페이지 로드 시 초기화
         window.addEventListener('load', () => {
             initThreeJS();
             initWebGL();
