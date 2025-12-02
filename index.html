@@ -20,7 +20,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #e5e5e9 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -32,10 +32,44 @@
 
         h1 {
             text-align: center;
-            color: white;
+            color: rgb(29, 28, 28);
             margin-bottom: 30px;
             font-size: 2.5em;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .library-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .lib-btn {
+            padding: 15px 40px;
+            background: white;
+            color: #667eea;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .lib-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .lib-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
         }
 
         .render-section {
@@ -44,6 +78,11 @@
             padding: 20px;
             margin-bottom: 30px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .render-section.active {
+            display: block;
         }
 
         .render-section h2 {
@@ -56,7 +95,7 @@
 
         .canvas-container {
             width: 100%;
-            height: 500px;
+            height: 600px;
             border: 2px solid #ddd;
             border-radius: 10px;
             overflow: hidden;
@@ -108,6 +147,16 @@
         button:hover {
             background: #764ba2;
         }
+
+        .no-selection {
+            text-align: center;
+            color: white;
+            font-size: 1.5em;
+            padding: 100px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin-top: 50px;
+        }
     </style>
 </head>
 
@@ -115,9 +164,21 @@
     <div class="container">
         <h1>🎨 3D 렌더링 테스트</h1>
 
+        <!-- 라이브러리 선택 버튼 -->
+        <div class="library-buttons">
+            <button class="lib-btn" data-library="threejs" onclick="selectLibrary('threejs', this)">Three.js</button>
+            <button class="lib-btn" data-library="webgl" onclick="selectLibrary('webgl', this)">WebGL</button>
+            <button class="lib-btn" data-library="aframe" onclick="selectLibrary('aframe', this)">A-Frame</button>
+        </div>
+
+        <!-- 선택 안내 메시지 -->
+        <div class="no-selection" id="no-selection">
+            위 버튼을 클릭하여 렌더링할 라이브러리를 선택하세요
+        </div>
+
         <!-- Three.js 섹션 -->
         <!-- 코드: js/threejs.js -->
-        <div class="render-section">
+        <div class="render-section" id="threejs-section">
             <h2>Three.js 렌더링</h2>
             <div class="canvas-container">
                 <canvas id="threejs-canvas"></canvas>
@@ -131,7 +192,7 @@
 
         <!-- WebGL 섹션 -->
         <!-- 코드: js/webgl.js -->
-        <div class="render-section">
+        <div class="render-section" id="webgl-section">
             <h2>WebGL (Native) 렌더링</h2>
             <div class="canvas-container">
                 <canvas id="webgl-canvas"></canvas>
@@ -145,7 +206,7 @@
 
         <!-- A-Frame 섹션 -->
         <!-- 코드: components/aframe.html -->
-        <div class="render-section">
+        <div class="render-section" id="aframe-section">
             <h2>A-Frame 렌더링</h2>
             <div class="canvas-container" id="aframe-container"></div>
             <div class="info">A-Frame을 사용한 GLTF 모델 렌더링 (자동 회전)</div>
@@ -158,26 +219,62 @@
 
     <!-- 초기화 -->
     <script>
-        // A-Frame 섹션 로드
-        (function () {
-            fetch('components/aframe.html')
-                .then(response => response.text())
-                .then(html => {
-                    const container = document.getElementById('aframe-container');
-                    if (container) {
-                        container.innerHTML = html;
-                    }
-                })
-                .catch(error => {
-                    console.error('A-Frame 컴포넌트 로드 오류:', error);
-                });
-        })();
+        let currentLibrary = null;
+        let threejsInitialized = false;
+        let webglInitialized = false;
+        let aframeLoaded = false;
 
-        // 페이지 로드 시 초기화
-        window.addEventListener('load', () => {
-            initThreeJS();
-            initWebGL();
-        });
+        // 라이브러리 선택 함수
+        function selectLibrary(library, buttonElement) {
+            // 모든 섹션 숨기기
+            document.querySelectorAll('.render-section').forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // 모든 버튼 비활성화
+            document.querySelectorAll('.lib-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 선택 안내 메시지 숨기기
+            document.getElementById('no-selection').style.display = 'none';
+
+            // 선택한 라이브러리 활성화
+            currentLibrary = library;
+            const section = document.getElementById(library + '-section');
+
+            section.classList.add('active');
+            buttonElement.classList.add('active');
+
+            // 선택한 라이브러리 초기화
+            if (library === 'threejs' && !threejsInitialized) {
+                initThreeJS();
+                threejsInitialized = true;
+            } else if (library === 'webgl' && !webglInitialized) {
+                initWebGL();
+                webglInitialized = true;
+            } else if (library === 'aframe' && !aframeLoaded) {
+                loadAFrame();
+                aframeLoaded = true;
+            }
+        }
+
+        // A-Frame 로드 함수
+        function loadAFrame() {
+            const container = document.getElementById('aframe-container');
+            if (container && !container.innerHTML.trim()) {
+                fetch('components/aframe.html')
+                    .then(response => response.text())
+                    .then(html => {
+                        container.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('A-Frame 컴포넌트 로드 오류:', error);
+                    });
+            }
+        }
+
+        // 페이지 로드 시 초기화하지 않음 (버튼 클릭 시에만 초기화)
     </script>
 </body>
 
