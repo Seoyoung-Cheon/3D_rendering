@@ -30,21 +30,21 @@ function initThreeJS() {
     // 씬(Scene) 설정
     // ============================================
     threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0x333333);  // 배경색: 검정색
+    // 피팅룸 느낌의 어두운 회색 배경
+    threeScene.background = new THREE.Color(0x333333);
 
     // ============================================
     // 기본 라이팅 설정 (천 질감 최적화: 반사 제거)
     // ============================================
-    // 환경광 위주: 강한 빛 제거하여 반사 없애기
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);  // 밝은 환경광으로 전체 조명
+    // 부드러운 피팅룸 조명: 약한 환경광
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     threeScene.add(ambientLight);
 
     // ============================================
-    // 부드러운 방향광 (약한 빛으로 soft shadow만)
+    // 부드러운 방향광 (위쪽에서 내려오는 스튜디오 라이트)
     // ============================================
-    // 매우 약한 방향광: 입체감만 살리기 (반사 유발 안 함)
-    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.2);
-    directionalLight1.position.set(3, 10, 10);
+    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.6);
+    directionalLight1.position.set(1.5, 4, 2);
     directionalLight1.castShadow = true;  // Soft shadow 활성화
     directionalLight1.shadow.mapSize.width = 2048;
     directionalLight1.shadow.mapSize.height = 2048;
@@ -52,11 +52,67 @@ function initThreeJS() {
     directionalLight1.shadow.camera.far = 50;
     threeScene.add(directionalLight1);
 
-    // 매우 약한 보조광: 그림자 대비만
-    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.15);
-    directionalLight2.position.set(-3, 5, -5);
+    // 매우 약한 보조광: 뒤에서 살짝 채워주는 라이트
+    const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.25);
+    directionalLight2.position.set(-2, 3, -2);
     directionalLight2.castShadow = true;
     threeScene.add(directionalLight2);
+
+    // ============================================
+    // 피팅룸 공간 구성 (바닥, 벽, 거울)
+    // ============================================
+    // 바닥(연한 회색 카펫 느낌)
+    const floorGeometry = new THREE.PlaneGeometry(6, 6);
+    const floorMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3a3a3a,
+        roughness: 1.0,
+        metalness: 0.0
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.set(0, 0, -1.0);
+    floor.receiveShadow = true;
+    threeScene.add(floor);
+
+    // 좌우 벽(어두운 회색 패널)
+    const wallMaterial = new THREE.MeshStandardMaterial({
+        color: 0x2b2b2b,
+        roughness: 1.0,
+        metalness: 0.0
+    });
+    const sideWallGeometry = new THREE.PlaneGeometry(6, 4);
+
+    const leftWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    leftWall.position.set(-1.8, 2, -1.0);
+    leftWall.rotation.y = Math.PI / 6;
+    threeScene.add(leftWall);
+
+    const rightWall = new THREE.Mesh(sideWallGeometry, wallMaterial);
+    rightWall.position.set(1.8, 2, -1.0);
+    rightWall.rotation.y = -Math.PI / 6;
+    threeScene.add(rightWall);
+
+    // 뒷벽(살짝 더 밝은 톤)
+    const backWallGeometry = new THREE.PlaneGeometry(4, 4.5);
+    const backWallMaterial = new THREE.MeshStandardMaterial({
+        color: 0x404040,
+        roughness: 1.0,
+        metalness: 0.0
+    });
+    const backWall = new THREE.Mesh(backWallGeometry, backWallMaterial);
+    backWall.position.set(0, 2, -2.5);
+    threeScene.add(backWall);
+
+    // 거울 패널(뒷벽 중앙, 살짝 밝은 회색으로 표현)
+    const mirrorGeometry = new THREE.PlaneGeometry(1.4, 3.0);
+    const mirrorMaterial = new THREE.MeshStandardMaterial({
+        color: 0x666666,
+        roughness: 0.3,   // 약간 매끈
+        metalness: 0.0
+    });
+    const mirror = new THREE.Mesh(mirrorGeometry, mirrorMaterial);
+    mirror.position.set(0.9, 2.0, -2.49);
+    threeScene.add(mirror);
 
     // ============================================
     // HDRI 환경 맵 설정 (선택적 - 로드 성공 시 추가)
@@ -164,7 +220,7 @@ function initThreeJS() {
                     'Dress_Layer_2': 0xd8d8d8,  // 드레스 레이어 2
                     'Dress_Layer_5': 0xd8d8d8,  // 레이어 5 (망사/허리/망토 계열)
                     'Dress_Layer_6': 0xd8d8d8,  // 레이어 6 (망사/허리/망토 계열)
-                    'Flowers': 0xb0c8ff,        // 꽃 장식 (조금 더 푸른 톤)
+                    'Flowers': 0xFFDEE1,        // 꽃 장식 (조금 더 푸른 톤)
                     'default': 0xd8d8d8         // 기본
                 };
 
