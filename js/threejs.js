@@ -30,7 +30,7 @@ function initThreeJS() {
     // 씬(Scene) 설정
     // ============================================
     threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0x000000);  // 배경색: 검정색
+    threeScene.background = new THREE.Color(0x333333);  // 배경색: 검정색
 
     // ============================================
     // 기본 라이팅 설정 (천 질감 최적화: 반사 제거)
@@ -144,7 +144,7 @@ function initThreeJS() {
                 // ============================================
                 // 드레스 모델 위치 설정
                 // ============================================
-                threeModel.position.set(0, 0.5, 0);  // 카메라 앞에 배치 (원점)
+                threeModel.position.set(0, 0.35, -0.55);  // 카메라 앞에 배치 (원점)
                 // 위치: (X: 좌우, Y: 상하, Z: 앞뒤)
                 // X: 양수=오른쪽, 음수=왼쪽
                 // Y: 양수=위, 음수=아래
@@ -424,7 +424,7 @@ function initThreeJS() {
     canvas.addEventListener('wheel', (e) => {
         e.preventDefault();
         // 카메라 Z 위치 변경 (휠 위로=가까이, 아래로=멀리)
-        threeCamera.position.z += e.deltaY * 0.01;  // 줌 속도 증가
+        threeCamera.position.z += e.deltaY * 0.001;  // 줌 속도 증가
         // 최소 거리: 0.3 (더 가까이 확대 가능), 최대 거리: 15으로 제한
         threeCamera.position.z = Math.max(0.3, Math.min(15, threeCamera.position.z));
     });
@@ -457,7 +457,7 @@ function animateThree() {
 
     // 드레스 자동 회전 (Y축 기준)
     if (threeModel && threeAnimationPlaying) {
-        threeModel.rotation.y += 0.005;  // 매 프레임마다 약간씩 회전
+        threeModel.rotation.y += 0.001;  // 매 프레임마다 약간씩 회전
     }
 
     // 씬 렌더링
