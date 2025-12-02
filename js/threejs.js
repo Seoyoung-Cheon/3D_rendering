@@ -30,7 +30,7 @@ function initThreeJS() {
     // 씬(Scene) 설정
     // ============================================
     threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0xd0d0d0);  // 배경색: 밝은 회색톤
+    threeScene.background = new THREE.Color(0x000000);  // 배경색: 검정색
 
     // ============================================
     // 기본 라이팅 설정 (천 질감 최적화: 반사 제거)
@@ -124,7 +124,6 @@ function initThreeJS() {
         }
 
         const modelPath = modelPaths[pathIndex];
-        console.log('모델 로드 시도:', modelPath);
 
         loader.load(
             modelPath,
@@ -132,7 +131,6 @@ function initThreeJS() {
             // 모델 로드 성공 콜백
             // ============================================
             (gltf) => {
-                console.log('모델 로드 성공:', modelPath);
                 modelLoaded = true;
                 threeModel = gltf.scene;  // GLTF 씬 가져오기
 
@@ -156,6 +154,34 @@ function initThreeJS() {
                 // ============================================
                 // 머티리얼 보정 (드레스 질감 설정)
                 // ============================================
+
+                // ============================================
+                // 각 레이어별 기본 색상 설정 (현재 색상을 유지하기 위한 값)
+                //  - 필요할 때 여기 숫자만 바꾸면 됨
+                // ============================================
+                const layerColors = {
+                    'Dress_Layer_1': 0xd8d8d8,  // 드레스 레이어 1
+                    'Dress_Layer_2': 0xd8d8d8,  // 드레스 레이어 2
+                    'Dress_Layer_5': 0xd8d8d8,  // 레이어 5 (망사/허리/망토 계열)
+                    'Dress_Layer_6': 0xd8d8d8,  // 레이어 6 (망사/허리/망토 계열)
+                    'Flowers': 0xb0c8ff,        // 꽃 장식 (조금 더 푸른 톤)
+                    'default': 0xd8d8d8         // 기본
+                };
+
+                // 허리/망토 영역을 더 세밀하게 나누기 위한 별도 색상 설정
+                //  - 지금은 둘 다 같은 색으로 두고, 나중에 필요하면 숫자만 바꾸면 됨
+                const areaColors = {
+                    cape: 0xcccccc,   // 망토(어깨에서 내려오는 망사)
+                    waist: 0xcccccc   // 허리춤 망사
+                };
+
+                // 망토(어깨 쪽 망사)로 확인된 메시 이름들
+                //  - 사용자 입력: Object_10, Object_12 가 망토 역할
+                const capeMeshes = ['Object_10', 'Object_12'];
+
+                // 텍스처를 비활성화할 레이어 (순수 색상만 사용)
+                const disableTextureLayers = ['Dress_Layer_5', 'Dress_Layer_6'];
+
                 threeModel.traverse((obj) => {
                     // 모든 메시 객체를 순회
                     if (obj.isMesh) {
@@ -190,13 +216,94 @@ function initThreeJS() {
                             }
 
                             // ============================================
-                            // 색상 보정: 밝기 조정 (눈부심 방지)
+                            // 레이어/영역별 색상 적용
                             // ============================================
-                            // 모든 머티리얼에 동일한 색상 적용 (덧댄 매쉬 포함)
-                            // 머티리얼 기본 색상 설정 (밝기 낮춤)
-                            if (mat.color) {
-                                // 텍스처 유무와 관계없이 모든 머티리얼에 동일한 색상 적용
-                                mat.color.set(0xd8d8d8);  // 일관된 밝은 회색 (모든 매쉬에 동일 적용)
+                            const materialName = mat.name || '';
+                            const meshName = obj.name || '';
+
+                            // 디버깅: 모든 머티리얼 정보 출력
+                            console.log(`메시: "${meshName}", 머티리얼: "${materialName}"`);
+
+                            const isLayer5 = materialName.includes('Dress_Layer_5');
+                            const isLayer6 = materialName.includes('Dress_Layer_6');
+
+                            // 망토: 사용자가 알려준 Object_10 / Object_12 + 레이어 5/6
+                            const isCape =
+                                (isLayer5 || isLayer6) &&
+                                capeMeshes.includes(meshName);
+
+                            // 허리춤 망사: 망토(Object_10, Object_12)가 아닌 나머지 드레스 메시 전체 중에서
+                            // 일단 사용자가 직접 확인하기 쉽도록, Object_4 / Object_8 을 허리 후보로 지정
+                            const waistMeshCandidates = ['Object_4', 'Object_8'];
+                            const isWaist =
+                                waistMeshCandidates.includes(meshName) &&
+                                !isCape;  // 망토와 겹치지 않도록
+
+                            // 디버깅: 각 조건 확인
+                            console.log(`  → isLayer5: ${isLayer5}, isLayer6: ${isLayer6}`);
+                            console.log(`  → 망토 여부(isCape): ${isCape}, 허리 여부(isWaist): ${isWaist}`);
+
+                            let layerColor = layerColors.default;  // 기본 색상
+                            let shouldDisableTexture = false;
+
+                            // 1) 허리/망토 우선 처리
+                            if (isCape) {
+                                layerColor = areaColors.cape;
+                                shouldDisableTexture = true;  // 망토는 텍스처 끄고 순색만
+                                console.log(`  → 망토로 인식됨, 색상: 0x${layerColor.toString(16)}`);
+                            } else if (isWaist) {
+                                layerColor = areaColors.waist;
+                                shouldDisableTexture = true;  // 허리도 텍스처 끄고 순색만
+                                console.log(`  → 허리춤 망사로 인식됨, 색상: 0x${layerColor.toString(16)}`);
+                            } else {
+                                // 2) 일반 레이어 이름으로 색상 결정
+                                let matchedLayer = 'default';
+                                for (const layerName in layerColors) {
+                                    if (layerName !== 'default' && materialName.includes(layerName)) {
+                                        layerColor = layerColors[layerName];
+                                        matchedLayer = layerName;
+                                        if (disableTextureLayers.includes(layerName)) {
+                                            shouldDisableTexture = true;
+                                        }
+                                        break;
+                                    }
+                                }
+                                if (matchedLayer !== 'default') {
+                                    console.log(`  → 레이어 "${matchedLayer}"로 매칭, 색상: 0x${layerColor.toString(16)}`);
+                                } else {
+                                    console.log(`  → 기본 색상 사용: 0x${layerColor.toString(16)}`);
+                                }
+                            }
+
+                            // 텍스처 비활성화 및 색상 강제 적용 (순수 색상만 사용하는 레이어)
+                            if (shouldDisableTexture) {
+                                // 텍스처 완전히 제거
+                                if (mat.map) {
+                                    mat.map = null;
+                                }
+                                // 모든 텍스처 맵 제거
+                                mat.alphaMap = null;
+                                mat.aoMap = null;
+                                mat.bumpMap = null;
+                                mat.displacementMap = null;
+                                mat.emissiveMap = null;
+                                mat.lightMap = null;
+                                mat.metalnessMap = null;
+                                mat.normalMap = null;
+                                mat.roughnessMap = null;
+
+                                // 색상 강제 적용
+                                if (mat.color) {
+                                    mat.color.setHex(layerColor);  // setHex로 명시적 색상 설정
+                                }
+
+                                // 머티리얼 업데이트 강제
+                                mat.needsUpdate = true;
+                            } else {
+                                // 일반 레이어: 색상만 적용 (텍스처는 유지)
+                                if (mat.color) {
+                                    mat.color.setHex(layerColor);  // setHex로 명시적 색상 설정
+                                }
                             }
 
                             // ============================================
@@ -243,6 +350,7 @@ function initThreeJS() {
                     }
                 });
 
+
                 // 씬에 모델 추가
                 threeScene.add(threeModel);
 
@@ -264,10 +372,7 @@ function initThreeJS() {
             // 로딩 진행률 콜백
             // ============================================
             (progress) => {
-                if (progress.lengthComputable) {
-                    const percentComplete = (progress.loaded / progress.total) * 100;
-                    console.log('로딩 진행률:', percentComplete.toFixed(2) + '%');
-                }
+                // 로딩 진행률 추적 (필요시 사용)
             },
             // ============================================
             // 로드 실패 콜백
