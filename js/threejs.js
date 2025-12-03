@@ -411,6 +411,22 @@ function initThreeJS() {
                 threeScene.add(threeModel);
 
                 // ============================================
+                // 드레스 아래 단상 (원기둥) 추가
+                // ============================================
+                const pedestalGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.3, 32);  // 반지름 0.4, 높이 0.3
+                const pedestalMaterial = new THREE.MeshStandardMaterial({
+                    color: 0xE8E8E0,  // 크림색 단상
+                    roughness: 0.8,
+                    metalness: 0.0
+                });
+                const pedestal = new THREE.Mesh(pedestalGeometry, pedestalMaterial);
+                // 드레스 모델 위치(0, 0.35, -0.55) 아래에 배치
+                pedestal.position.set(0, 0.35 - 0.15, -0.55);  // 드레스 높이의 절반 아래
+                pedestal.receiveShadow = true;
+                pedestal.castShadow = true;
+                threeScene.add(pedestal);
+
+                // ============================================
                 // 애니메이션 설정
                 // ============================================
                 if (gltf.animations && gltf.animations.length) {
