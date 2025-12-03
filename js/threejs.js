@@ -216,19 +216,19 @@ function initThreeJS() {
                 //  - 필요할 때 여기 숫자만 바꾸면 됨
                 // ============================================
                 const layerColors = {
-                    'Dress_Layer_1': 0xd8d8d8,  // 드레스 레이어 1
-                    'Dress_Layer_2': 0xd8d8d8,  // 드레스 레이어 2
-                    'Dress_Layer_5': 0xd8d8d8,  // 레이어 5 (망사/허리/망토 계열)
-                    'Dress_Layer_6': 0xd8d8d8,  // 레이어 6 (망사/허리/망토 계열)
+                    'Dress_Layer_1': 0xF0F0F0,  // 드레스 레이어 1 (한 단계 더 밝게)
+                    'Dress_Layer_2': 0xE8E8E8,  // 드레스 레이어 2 (한 단계 더 밝게)
+                    'Dress_Layer_5': 0xE8E8E8,  // 레이어 5 (망사/허리/망토 계열, 한 단계 더 밝게)
+                    'Dress_Layer_6': 0xE8E8E8,  // 레이어 6 (망사/허리/망토 계열, 한 단계 더 밝게)
                     'Flowers': 0xFFDEE1,        // 꽃 장식 (조금 더 푸른 톤)
-                    'default': 0xd8d8d8         // 기본
+                    'default': 0xF0F0F0        // 기본 (한 단계 더 밝게)
                 };
 
                 // 허리/망토 영역을 더 세밀하게 나누기 위한 별도 색상 설정
                 //  - 지금은 둘 다 같은 색으로 두고, 나중에 필요하면 숫자만 바꾸면 됨
                 const areaColors = {
-                    cape: 0xcccccc,   // 망토(어깨에서 내려오는 망사)
-                    waist: 0xcccccc   // 허리춤 망사
+                    cape: 0xDCDCDC,   // 망토(어깨에서 내려오는 망사, 한 단계 더 밝게)
+                    waist: 0xDCDCDC   // 허리춤 망사 (한 단계 더 밝게)
                 };
 
                 // 망토(어깨 쪽 망사)로 확인된 메시 이름들
